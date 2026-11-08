@@ -1,0 +1,122 @@
+tenants:
+  dev:
+    tenant_name: dvh-auth-dev
+    description: Development tenant for feature validation and QA.
+    custom_domain: dev-auth.dvh.example.com
+    applications:
+      native_mobile:
+        name: dvh-mobile-dev
+        type: native
+        callbacks:
+          - dvhapp://auth/callback
+          - com.dvh.mobile://auth0
+        allowed_logout_urls:
+          - dvhapp://logout
+        allowed_origins:
+          - https://dev-api.dvh.example.com
+        grant_types:
+          - authorization_code
+          - refresh_token
+        token_endpoint_auth_method: none
+      m2m_backend:
+        name: dvh-backend-dev
+        type: non_interactive
+        audience: https://dev-api.dvh.example.com
+        grant_types:
+          - client_credentials
+        scopes:
+          - read:users
+          - update:users
+          - delete:users
+    security:
+      brute_force_protection: true
+      breached_password_detection: true
+      anomaly_detection:
+        enable_admin_alerts: true
+        block_suspicious_ips: true
+    email:
+      verification_required: true
+  test:
+    tenant_name: dvh-auth-test
+    description: Staging tenant mirroring production configuration.
+    custom_domain: test-auth.dvh.example.com
+    applications:
+      native_mobile:
+        name: dvh-mobile-test
+        type: native
+        callbacks:
+          - dvhapp-test://auth/callback
+        allowed_logout_urls:
+          - dvhapp-test://logout
+        allowed_origins:
+          - https://test-api.dvh.example.com
+        grant_types:
+          - authorization_code
+          - refresh_token
+        token_endpoint_auth_method: none
+      m2m_backend:
+        name: dvh-backend-test
+        type: non_interactive
+        audience: https://test-api.dvh.example.com
+        grant_types:
+          - client_credentials
+        scopes:
+          - read:users
+          - update:users
+          - delete:users
+    security:
+      brute_force_protection: true
+      breached_password_detection: true
+      anomaly_detection:
+        enable_admin_alerts: true
+        block_suspicious_ips: true
+    email:
+      verification_required: true
+  prod:
+    tenant_name: dvh-auth-prod
+    description: Production tenant serving customer traffic.
+    custom_domain: auth.dvh.example.com
+    applications:
+      native_mobile:
+        name: dvh-mobile-prod
+        type: native
+        callbacks:
+          - dvhapp://auth/callback
+        allowed_logout_urls:
+          - dvhapp://logout
+        allowed_origins:
+          - https://api.dvh.example.com
+        grant_types:
+          - authorization_code
+          - refresh_token
+        token_endpoint_auth_method: none
+      m2m_backend:
+        name: dvh-backend-prod
+        type: non_interactive
+        audience: https://api.dvh.example.com
+        grant_types:
+          - client_credentials
+        scopes:
+          - read:users
+          - update:users
+          - delete:users
+    security:
+      brute_force_protection: true
+      breached_password_detection: true
+      anomaly_detection:
+        enable_admin_alerts: true
+        block_suspicious_ips: true
+    email:
+      verification_required: true
+
+shared_policies:
+  password_policy: "good"
+  refresh_token:
+    rotation_type: rotating
+    expiration: 2592000 # 30 days in seconds
+  token_endpoint_auth_method: client_secret_post
+
+provisioning_notes:
+  - "Use Auth0 Deploy CLI or Terraform provider to materialize these tenants."
+  - "Ensure anomaly detection email recipients are set to security@dvh.example.com."
+  - "Custom domains require DNS validation before activation; coordinate with infra team."

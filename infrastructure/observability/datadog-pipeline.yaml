@@ -1,0 +1,60 @@
+log_forwarders:
+  auth0_stream:
+    source: auth0
+    destination: datadog
+    description: >-
+      Streams Auth0 tenant logs into Datadog for authentication monitoring.
+    config:
+      auth0:
+        tenant_domain: ${AUTH0_DOMAIN}
+        client_id: ${AUTH0_CLIENT_ID_M2M}
+        client_secret: ${AUTH0_CLIENT_SECRET_M2M}
+        checkpoint_table: auth0_log_offsets
+        poll_interval_seconds: 60
+      datadog:
+        api_key: ${DATADOG_API_KEY}
+        region: us1
+        tags:
+          - service:auth
+          - team:platform
+          - component:auth
+          - env:${NODE_ENV}
+alerts:
+  login_failure_rate:
+    type: metric_threshold
+    metric: auth.login.failure_rate
+    threshold: 0.05
+    comparison: ">"
+    evaluation_period_minutes: 10
+    notify:
+      channels:
+        - pagerduty: auth-oncall
+        - slack: "#auth-alerts"
+    message: >-
+      High login failure rate detected (>5% of attempts failing). Investigate recent deploys
+      or upstream issues. Runbook: docs/runbooks/authentication.md#login-failures.
+  password_reset_errors:
+    type: metric_threshold
+    metric: auth.password_reset.error_rate
+    threshold: 0.02
+    comparison: ">"
+    evaluation_period_minutes: 15
+    notify:
+      channels:
+        - pagerduty: auth-oncall
+        - slack: "#auth-alerts"
+    message: >-
+      Elevated password reset errors (>2% failed). Check Auth0 logs for error signatures and
+      verify email provider status.
+  token_latency_anomaly:
+    type: anomaly_detection
+    metric: auth.token.issuance_latency_p95
+    sensitivity: medium
+    evaluation_period_minutes: 30
+    notify:
+      channels:
+        - pagerduty: auth-oncall
+        - slack: "#auth-alerts"
+    message: >-
+      Token issuance latency anomaly detected. Possible upstream Auth0 hiccup or backend
+      dependency slowdown. Follow runbook section docs/runbooks/authentication.md#latency.
